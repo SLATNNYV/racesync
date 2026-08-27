@@ -1,0 +1,43 @@
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Backend
+backend/target/
+
+# Logs
+*.log
+backend_err.log
+backend_out.log
+
+# Arquivos temporários
+*_temp*/
+*.tmp
+
+# Ambiente
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+Add-Content .gitignore "`ntools/jdk/"
+
+
+
+Add-Content .gitignore "`ntools/jdk/"
+Add-Content .gitignore "`nfrontend/node_modules/"
+Add-Content .gitignore "`nbackend/target/"
+Add-Content .gitignore "`n*.log"
+
+
+.tools/
+Add-Content .gitignore ".tools/"
+.tools/
