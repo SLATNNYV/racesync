@@ -209,6 +209,33 @@ button, input, select, textarea {
 }
 
 /* Responsive Design */
+.grid-container {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 32px;
+  align-items: flex-start;
+}
+@media (max-width: 768px) {
+  .grid-container {
+    grid-template-columns: 1fr;
+  }
+  body {
+    font-size: 0.9rem;
+    padding: 0 1rem;
+  }
+  .glass-panel {
+    padding: 16px;
+    margin: 8px;
+  }
+  .btn-primary, .btn-secondary {
+    padding: 10px 20px;
+    font-size: 0.8rem;
+  }
+  .form-control {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+  }
+}
 @media (max-width: 768px) {
   /* Tablet adjustments */
   body {

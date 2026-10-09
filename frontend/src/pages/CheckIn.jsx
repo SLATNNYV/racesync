@@ -185,7 +185,7 @@ function CheckIn({ token }) {
       </div>
 
       {/* Grid de duas colunas: Esquerda (Leitor QR) e Direita (Lista de reservas) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '32px', alignItems: 'flex-start' }}>
+      <div className="grid-container" style={{ display: 'grid', gap: '32px', alignItems: 'flex-start' }}>
         
         {/* Coluna Esquerda: Formulário Simulador de Scanner QR Code */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
