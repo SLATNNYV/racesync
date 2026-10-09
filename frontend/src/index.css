@@ -207,3 +207,45 @@ button, input, select, textarea {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  /* Tablet adjustments */
+  body {
+    font-size: 0.9rem;
+    padding: 0 1rem;
+  }
+  .glass-panel {
+    padding: 16px;
+    margin: 8px;
+  }
+  .btn-primary, .btn-secondary {
+    padding: 10px 20px;
+    font-size: 0.8rem;
+  }
+  .form-control {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Mobile adjustments */
+  body {
+    font-size: 0.85rem;
+  }
+  .glass-panel {
+    padding: 12px;
+  }
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.75rem;
+  }
+  .form-group {
+    flex-direction: column;
+  }
+  .form-control {
+    font-size: 0.8rem;
+  }
+}
