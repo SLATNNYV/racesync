@@ -350,7 +350,7 @@ function AdminStaffForm({ token }) {
           <label>Senha de Acesso</label>
           <input type="password" className="form-control" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Senha provisória" />
         </div>
-        <div className="form-group span-2" style={{ gridColumn: 'span 2' }}>
+        <div className="form-group span-2">
           <label>Função / Perfil</label>
           <select className="form-control" value={role} onChange={(e) => setRole(e.target.value)} required>
             <option value="ORGANIZER">ORGANIZER - Organizador do Evento</option>
@@ -358,7 +358,7 @@ function AdminStaffForm({ token }) {
             <option value="PILOT_SPECTATOR">PILOT_SPECTATOR - Piloto</option>
           </select>
         </div>
-        <button type="submit" className="btn-primary span-2" disabled={loading} style={{ gridColumn: 'span 2', height: '48px', justifyContent: 'center', width: '100%' }}>
+        <button type="submit" className="btn-primary span-2" disabled={loading} style={{ height: '48px', justifyContent: 'center', width: '100%' }}>
           {loading ? 'Cadastrando...' : 'Cadastrar Membro'}
         </button>
       </form>

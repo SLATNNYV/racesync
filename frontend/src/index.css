@@ -311,6 +311,10 @@ button, input, select, textarea {
   gap: 16px;
 }
 
+.grid-admin-form .span-2 {
+  grid-column: span 2;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;

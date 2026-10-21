@@ -5,7 +5,7 @@ import Vehicles from './pages/Vehicles'
 import Bookings from './pages/Bookings'
 import InspectionPortal from './pages/InspectionPortal'
 import CheckIn from './pages/CheckIn'
-import { LogOut, Car, Calendar, CheckSquare, LayoutDashboard, User, QrCode, Menu, X } from 'lucide-react'
+import { LogOut, Car, Calendar, CheckSquare, LayoutDashboard, User, QrCode } from 'lucide-react'
 
 // Backend base URL
 export const API_BASE_URL = 'http://localhost:8080/api'
@@ -15,7 +15,7 @@ function App() {
   const [user, setUser] = useState(null)
   const [currentPage, setCurrentPage] = useState('dashboard')
   const [loading, setLoading] = useState(true)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
 
   // Fetch current user details on load or token change
   useEffect(() => {
