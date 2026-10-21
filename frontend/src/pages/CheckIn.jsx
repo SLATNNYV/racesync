@@ -15,7 +15,7 @@ function CheckIn({ token }) {
   // Estado para armazenar os detalhes da credencial que foi validada com sucesso
   const [scanResult, setScanResult] = useState(null)
   
-  // Estado para capturar e exibir mensagens de erro durante a validação (como "Vistoria Reprovada" ou "Token inválido")
+  // Estado para capturar e exibir mensagens de erro durante a validação
   const [scanError, setScanError] = useState('')
   
   // Estado que armazena a lista geral de reservas buscada da base de dados do sistema
@@ -24,7 +24,7 @@ function CheckIn({ token }) {
   // Estado de controle para mostrar feedback visual de carregamento na tela
   const [loading, setLoading] = useState(true)
   
-  // Estado para filtrar as reservas na barra de busca (por piloto, carro, placa, etc.)
+  // Estado para filtrar as reservas na barra de busca
   const [searchTerm, setSearchTerm] = useState('')
   
   // Estado lógico para indicar se o sistema está processando uma requisição de check-in ativa
@@ -60,7 +60,6 @@ function CheckIn({ token }) {
 
   /**
    * Processa a validação enviando o token do leitor de QR Code para a rota `/api/bookings/check-in`.
-   * Esta função simula o hardware físico da portaria batendo na API e retornando a aprovação ou recusa do piloto.
    */
   const handleTokenCheckIn = async (e) => {
     e.preventDefault()
@@ -80,7 +79,7 @@ function CheckIn({ token }) {
         body: JSON.stringify({ qrCodeToken: qrTokenInput.trim() })
       })
 
-      // Lê o conteúdo da resposta, que pode ser JSON (se aprovado) ou texto plano (se recusado com string explicativa)
+      // Lê o conteúdo da resposta
       let data
       const contentType = response.headers.get('content-type')
       if (contentType && contentType.includes('application/json')) {
@@ -90,16 +89,13 @@ function CheckIn({ token }) {
       }
 
       if (response.ok) {
-        // Se a resposta retornou sucesso (HTTP 200), exibe o check-in como aprovado
         setScanResult({
           success: true,
           booking: typeof data === 'string' ? null : data
         })
         setQrTokenInput('')
-        // Atualiza a listagem de reservas para marcar o piloto como CHECKED_IN
         fetchBookings()
       } else {
-        // Se a resposta retornou erro, captura a string descritiva da recusa técnica e exibe na tela
         setScanError(typeof data === 'string' ? data : (data.error || 'Erro na validação do check-in.'))
       }
     } catch (err) {
@@ -111,8 +107,7 @@ function CheckIn({ token }) {
   }
 
   /**
-   * Permite que o gestor faça o check-in manual direto da lista de reservas sem precisar colar o token.
-   * Utiliza o mesmo fluxo e rota de validação de segurança da API.
+   * Permite que o gestor faça o check-in manual direto da lista de reservas.
    * 
    * @param {string} qrCodeToken - Token UUID da reserva que será processada
    */
@@ -158,7 +153,7 @@ function CheckIn({ token }) {
   }
 
   // Filtra as reservas de acordo com o texto digitado na barra de buscas
-  const filteredBookings = bookings.filter(b => 
+  const filteredBookings = bookings.filter(b =>
     b.pilot?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     b.vehicle?.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
     b.vehicle?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -167,43 +162,41 @@ function CheckIn({ token }) {
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }} className="animate-fade-in">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }} className="animate-fade-in">
       
       {/* Cabeçalho da página */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="page-header">
         <div>
           <span style={{ fontSize: '0.8rem', color: 'var(--accent-red)', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'var(--font-display)' }}>
             PORTAL ADMINISTRATIVO
           </span>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 900, color: '#fff', marginTop: '4px' }}>
-            PORTARIA & CHECK-IN DE ARRANCADA
-          </h2>
+          <h2 className="page-title">PORTARIA & CHECK-IN</h2>
         </div>
-        <button className="btn-secondary" onClick={fetchBookings}>
+        <button className="btn-secondary btn-mobile-full" onClick={fetchBookings}>
           Atualizar Lista
         </button>
       </div>
 
-      {/* Grid de duas colunas: Esquerda (Leitor QR) e Direita (Lista de reservas) */}
-      <div className="grid-container" style={{ display: 'grid', gap: '32px', alignItems: 'flex-start' }}>
+      {/* Grid de duas colunas responsivo */}
+      <div className="grid-checkin">
         
         {/* Coluna Esquerda: Formulário Simulador de Scanner QR Code */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div className="glass-panel" style={{ border: '1px solid var(--border-color)' }}>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', color: '#fff', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <QrCode size={20} color="var(--accent-blue)" />
-              Simulador de Leitora QR Code
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', color: '#fff', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <QrCode size={18} color="var(--accent-blue)" />
+              Simulador de Leitora QR
             </h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '20px' }}>
-              Insira o token de segurança UUID da credencial do piloto para simular a leitura do QR Code na portaria do autódromo.
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '16px' }}>
+              Insira o token UUID da credencial do piloto para simular a leitura do QR Code na portaria.
             </p>
 
-            <form onSubmit={handleTokenCheckIn} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div className="form-group">
+            <form onSubmit={handleTokenCheckIn} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="form-group" style={{ margin: 0 }}>
                 <label>Token da Credencial (UUID)</label>
-                <input 
-                  type="text" 
-                  placeholder="Cole o UUID da credencial (ex: 8f4e2b...)" 
+                <input
+                  type="text"
+                  placeholder="Cole o UUID da credencial..."
                   className="form-control"
                   required
                   value={qrTokenInput}
@@ -211,9 +204,9 @@ function CheckIn({ token }) {
                 />
               </div>
 
-              <button 
-                type="submit" 
-                className="btn-primary" 
+              <button
+                type="submit"
+                className="btn-primary"
                 style={{ width: '100%', justifyContent: 'center' }}
                 disabled={processingToken || !qrTokenInput.trim()}
               >
@@ -222,7 +215,7 @@ function CheckIn({ token }) {
             </form>
           </div>
 
-          {/* Renderização do Resultado do Scan (Painel de Sucesso ou Erro) */}
+          {/* Renderização do Resultado do Scan */}
           {(scanResult || scanError) && (
             <div className="glass-panel animate-fade-in" style={{
               border: `1px solid ${scanError ? 'var(--status-rejected)' : 'var(--status-approved)'}`,
@@ -231,14 +224,14 @@ function CheckIn({ token }) {
               flexDirection: 'column',
               alignItems: 'center',
               textAlign: 'center',
-              padding: '32px'
+              padding: '24px'
             }}>
               {/* Se o check-in foi bem sucedido */}
               {scanResult && scanResult.booking && (
                 <>
                   <div style={{
-                    width: '64px',
-                    height: '64px',
+                    width: '56px',
+                    height: '56px',
                     borderRadius: '50%',
                     background: 'rgba(0, 230, 118, 0.15)',
                     border: '2px solid var(--status-approved)',
@@ -246,14 +239,14 @@ function CheckIn({ token }) {
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'var(--status-approved)',
-                    marginBottom: '16px'
+                    marginBottom: '12px'
                   }}>
-                    <Check size={36} />
+                    <Check size={32} />
                   </div>
-                  <h4 style={{ fontFamily: 'var(--font-display)', color: '#fff', fontSize: '1.25rem', marginBottom: '4px', textTransform: 'uppercase' }}>
+                  <h4 style={{ fontFamily: 'var(--font-display)', color: '#fff', fontSize: '1.1rem', marginBottom: '4px', textTransform: 'uppercase' }}>
                     CHECK-IN CONFIRMADO!
                   </h4>
-                  <p style={{ color: 'var(--status-approved)', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '20px' }}>
+                  <p style={{ color: 'var(--status-approved)', fontSize: '0.82rem', fontWeight: 'bold', marginBottom: '16px' }}>
                     ENTRADA LIBERADA PARA A PISTA
                   </p>
 
@@ -263,12 +256,12 @@ function CheckIn({ token }) {
                     background: 'rgba(255,255,255,0.02)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '8px',
-                    padding: '16px',
-                    fontSize: '0.85rem',
+                    padding: '14px',
+                    fontSize: '0.82rem',
                     textAlign: 'left',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '8px'
+                    gap: '6px'
                   }}>
                     <div><strong>Piloto:</strong> {scanResult.booking.pilot?.name || 'Piloto'}</div>
                     <div><strong>Evento:</strong> {scanResult.booking.event?.name}</div>
@@ -278,12 +271,12 @@ function CheckIn({ token }) {
                 </>
               )}
 
-              {/* Se o check-in falhou (por exemplo, carro reprovado na vistoria de segurança) */}
+              {/* Se o check-in falhou */}
               {scanError && (
                 <>
                   <div style={{
-                    width: '64px',
-                    height: '64px',
+                    width: '56px',
+                    height: '56px',
                     borderRadius: '50%',
                     background: 'rgba(255, 23, 68, 0.15)',
                     border: '2px solid var(--status-rejected)',
@@ -291,14 +284,14 @@ function CheckIn({ token }) {
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'var(--status-rejected)',
-                    marginBottom: '16px'
+                    marginBottom: '12px'
                   }}>
-                    <ShieldAlert size={36} />
+                    <ShieldAlert size={32} />
                   </div>
-                  <h4 style={{ fontFamily: 'var(--font-display)', color: '#fff', fontSize: '1.25rem', marginBottom: '8px', textTransform: 'uppercase' }}>
+                  <h4 style={{ fontFamily: 'var(--font-display)', color: '#fff', fontSize: '1.1rem', marginBottom: '8px', textTransform: 'uppercase' }}>
                     ACESSO NEGADO!
                   </h4>
-                  <p style={{ color: 'var(--status-rejected)', fontSize: '0.9rem', fontWeight: 600, padding: '0 10px', lineHeight: '1.4' }}>
+                  <p style={{ color: 'var(--status-rejected)', fontSize: '0.88rem', fontWeight: 600, padding: '0 8px', lineHeight: '1.4' }}>
                     {scanError}
                   </p>
                 </>
@@ -309,18 +302,18 @@ function CheckIn({ token }) {
 
         {/* Coluna Direita: Lista Geral de Reservas & Acessos cadastrados */}
         <div className="glass-panel">
-          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', color: '#fff', marginBottom: '16px' }}>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', color: '#fff', marginBottom: '14px' }}>
             Lista Geral de Reservas & Acessos
           </h3>
 
           {/* Campo de Busca rápida */}
-          <div style={{ position: 'relative', marginBottom: '20px' }}>
-            <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input 
-              type="text" 
-              placeholder="Buscar piloto, carro, placa ou token..." 
+          <div style={{ position: 'relative', marginBottom: '16px' }}>
+            <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              placeholder="Buscar piloto, carro ou token..."
               className="form-control"
-              style={{ width: '100%', paddingLeft: '48px' }}
+              style={{ width: '100%', paddingLeft: '42px' }}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -331,7 +324,7 @@ function CheckIn({ token }) {
           ) : filteredBookings.length === 0 ? (
             <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '30px' }}>Nenhuma reserva encontrada.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {filteredBookings.map(booking => {
                 const isCheckedIn = booking.status === 'CHECKED_IN'
                 const isInspected = booking.vehicle?.inspectionStatus === 'APPROVED'
@@ -341,52 +334,52 @@ function CheckIn({ token }) {
                   <div key={booking.id} style={{
                     border: '1px solid var(--border-color)',
                     borderRadius: '8px',
-                    padding: '16px',
+                    padding: '14px',
                     background: isCheckedIn ? 'rgba(0, 230, 118, 0.02)' : 'rgba(255,255,255,0.01)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: '12px'
+                    gap: '10px',
+                    flexWrap: 'wrap'
                   }}>
                     {/* Informações detalhadas do piloto e seu agendamento */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.92rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', minWidth: 0, flex: 1 }}>
+                      <div style={{ fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>
                         {booking.pilot?.name}
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                         <div>Evento: {booking.event?.name}</div>
-                        <div>Chave / Sorteio: {booking.timeSlot}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                          Veículo: {booking.vehicle?.name} (Nº #{booking.vehicle?.number})
-                        </div>
-                        <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.25)', wordBreak: 'break-all', marginTop: '4px' }}>
+                        <div>Chave: {booking.timeSlot}</div>
+                        <div>Veículo: {booking.vehicle?.name} (#{booking.vehicle?.number})</div>
+                        <div className="booking-token" style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)', wordBreak: 'break-all', marginTop: '3px' }}>
                           Token: {booking.qrCodeToken}
                         </div>
                       </div>
                     </div>
 
                     {/* Botões de Ações e Status da vistoria */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
                       {isCheckedIn ? (
-                        <span className="badge badge-approved" style={{ fontSize: '0.7rem' }}>Na Área de Puxada</span>
+                        <span className="badge badge-approved" style={{ fontSize: '0.65rem' }}>Na Puxada</span>
                       ) : (
                         <>
                           <div style={{ display: 'flex', gap: '4px' }}>
                             {isInspected ? (
                               <span className="badge badge-approved" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>Vistoria OK</span>
                             ) : isRejected ? (
-                              <span className="badge badge-rejected" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>Vistoria Reprovada</span>
+                              <span className="badge badge-rejected" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>Reprovado</span>
                             ) : (
-                              <span className="badge badge-pending" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>Vistoria Pendente</span>
+                              <span className="badge badge-pending" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>Pendente</span>
                             )}
                           </div>
 
-                          {/* Botão de Check-in Manual. Habilitado apenas se o carro foi inspecionado e Aprovado */}
-                          <button 
-                            className="btn-primary" 
-                            style={{ 
-                              padding: '6px 12px', 
-                              fontSize: '0.75rem', 
+                          {/* Botão de Check-in Manual */}
+                          <button
+                            className="btn-primary"
+                            style={{
+                              padding: '6px 12px',
+                              fontSize: '0.75rem',
+                              minHeight: '36px',
                               background: isInspected ? 'linear-gradient(135deg, var(--accent-blue), #008ba3)' : 'rgba(255,255,255,0.05)',
                               boxShadow: isInspected ? '0 2px 8px rgba(0, 188, 212, 0.2)' : 'none',
                               border: isInspected ? 'none' : '1px solid var(--border-color)',

@@ -16,7 +16,7 @@ function InspectionPortal({ token }) {
   // Controle de feedback visual de carregamento
   const [loading, setLoading] = useState(true)
   
-  // Filtro de buscas na tabela (por placa, modelo, marca ou piloto)
+  // Filtro de buscas na tabela
   const [searchTerm, setSearchTerm] = useState('')
   
   // Guarda o veículo que está sendo vistoriado no formulário ativo
@@ -25,7 +25,7 @@ function InspectionPortal({ token }) {
   // Guarda a decisão de segurança escolhida no formulário (APPROVED ou REJECTED)
   const [inspectionStatus, setInspectionStatus] = useState('APPROVED')
   
-  // Anotações sobre o estado de segurança do carro (pneus, cinto, freio, etc.)
+  // Anotações sobre o estado de segurança do carro
   const [inspectionNotes, setInspectionNotes] = useState('')
   
   // Controle de submissão do formulário
@@ -77,6 +77,10 @@ function InspectionPortal({ token }) {
     setInspectionNotes(vehicle.inspectionNotes || '')
     setMessage('')
     setError('')
+    // Scroll para o formulário de vistoria no mobile
+    setTimeout(() => {
+      document.getElementById('inspection-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
   }
 
   /**
@@ -121,27 +125,28 @@ function InspectionPortal({ token }) {
   }
 
   // Filtra os carros com base na caixa de pesquisa
-  const filteredVehicles = vehicles.filter(v => 
+  const filteredVehicles = vehicles.filter(v =>
     v.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
     v.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
     v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     v.owner.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  // Número de colunas do grid: 2 se estiver editando (desktop), 1 caso contrário
+  const gridCols = editingVehicle ? '1.2fr 1fr' : '1fr'
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }} className="animate-fade-in">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }} className="animate-fade-in">
       
       {/* Cabeçalho */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="page-header">
         <div>
           <span style={{ fontSize: '0.8rem', color: 'var(--accent-red)', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'var(--font-display)' }}>
             PORTAL ADMINISTRATIVO
           </span>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 900, color: '#fff', marginTop: '4px' }}>
-            VISTORIA TÉCNICA DE ARRANCADA
-          </h2>
+          <h2 className="page-title">VISTORIA TÉCNICA</h2>
         </div>
-        <button className="btn-secondary" onClick={fetchVehicles}>
+        <button className="btn-secondary btn-mobile-full" onClick={fetchVehicles}>
           <RefreshCw size={16} />
           Atualizar Lista
         </button>
@@ -160,18 +165,21 @@ function InspectionPortal({ token }) {
         </div>
       )}
 
-      {/* Grid responsivo: Tabela de Veículos (Esquerda) e Painel de Vistoria (Direita - se selecionado) */}
-      <div style={{ display: 'grid', gridTemplateColumns: editingVehicle ? '1.2fr 1fr' : '1fr', gap: '32px', alignItems: 'flex-start' }}>
+      {/* Grid responsivo: Tabela (Esquerda) + Painel de Vistoria (Direita, se selecionado) */}
+      <div
+        className="grid-inspection"
+        style={{ gridTemplateColumns: editingVehicle ? gridCols : '1fr' }}
+      >
         
-        {/* Lado Esquerdo: Lista de Carros com barra de pesquisa */}
+        {/* Tabela de Veículos com barra de pesquisa */}
         <div className="glass-panel">
-          <div style={{ position: 'relative', marginBottom: '24px' }}>
-            <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input 
-              type="text" 
-              placeholder="Buscar por placa, modelo, marca ou piloto..." 
+          <div style={{ position: 'relative', marginBottom: '20px' }}>
+            <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              placeholder="Buscar por piloto, modelo ou categoria..."
               className="form-control"
-              style={{ width: '100%', paddingLeft: '48px' }}
+              style={{ width: '100%', paddingLeft: '42px' }}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -183,12 +191,13 @@ function InspectionPortal({ token }) {
             <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '30px' }}>Nenhum veículo encontrado correspondendo aos critérios.</div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+              {/* Tabela no desktop */}
+              <table className="inspection-table">
                 <thead>
                   <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)', height: '40px' }}>
                     <th style={{ padding: '8px 12px' }}>Piloto</th>
                     <th style={{ padding: '8px 12px' }}>Veículo</th>
-                    <th style={{ padding: '8px 12px' }}>Nº Identificação</th>
+                    <th style={{ padding: '8px 12px' }}>Nº</th>
                     <th style={{ padding: '8px 12px' }}>Status</th>
                     <th style={{ padding: '8px 12px', textAlign: 'right' }}>Ações</th>
                   </tr>
@@ -196,13 +205,13 @@ function InspectionPortal({ token }) {
                 <tbody>
                   {filteredVehicles.map(vehicle => (
                     <tr key={vehicle.id} style={{ borderBottom: '1px solid var(--border-color)', height: '54px' }}>
-                      <td style={{ padding: '8px 12px' }}>
+                      <td style={{ padding: '8px 12px' }} data-label="Piloto">
                         <div><strong>{vehicle.owner.name}</strong></div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{vehicle.owner.email}</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{vehicle.owner.email}</div>
                       </td>
-                      <td style={{ padding: '8px 12px' }}>{vehicle.name} ({vehicle.category})</td>
-                      <td style={{ padding: '8px 12px', fontWeight: 600, fontFamily: 'var(--font-display)' }}>#{vehicle.number}</td>
-                      <td style={{ padding: '8px 12px' }}>
+                      <td style={{ padding: '8px 12px' }} data-label="Veículo">{vehicle.name} ({vehicle.category})</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 600, fontFamily: 'var(--font-display)' }} data-label="Nº">#{vehicle.number}</td>
+                      <td style={{ padding: '8px 12px' }} data-label="Status">
                         {vehicle.inspectionStatus === 'APPROVED' ? (
                           <span className="badge badge-approved">Aprovado</span>
                         ) : vehicle.inspectionStatus === 'REJECTED' ? (
@@ -212,9 +221,9 @@ function InspectionPortal({ token }) {
                         )}
                       </td>
                       <td style={{ padding: '8px 12px', textAlign: 'right' }}>
-                        <button 
-                          className="btn-secondary" 
-                          style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '0.8rem', minHeight: '36px' }}
                           onClick={() => startInspection(vehicle)}
                         >
                           Vistoriar
@@ -228,15 +237,15 @@ function InspectionPortal({ token }) {
           )}
         </div>
 
-        {/* Lado Direito: Formulário ativo para dar parecer na vistoria */}
+        {/* Formulário ativo para dar parecer na vistoria */}
         {editingVehicle && (
-          <div className="glass-panel animate-fade-in" style={{ border: '1px solid var(--accent-blue)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', color: '#fff' }}>
+          <div id="inspection-form" className="glass-panel animate-fade-in" style={{ border: '1px solid var(--accent-blue)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', color: '#fff' }}>
                 VISTORIAR VEÍCULO
               </h3>
-              <button 
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+              <button
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px', minHeight: '36px', minWidth: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 onClick={() => setEditingVehicle(null)}
               >
                 <X size={20} />
@@ -247,24 +256,24 @@ function InspectionPortal({ token }) {
             <div style={{
               background: 'rgba(255,255,255,0.02)',
               border: '1px solid var(--border-color)',
-              padding: '16px',
+              padding: '14px',
               borderRadius: '8px',
-              marginBottom: '24px',
+              marginBottom: '20px',
               display: 'flex',
               flexDirection: 'column',
               gap: '6px',
-              fontSize: '0.88rem'
+              fontSize: '0.85rem'
             }}>
               <div><strong>Piloto:</strong> {editingVehicle.owner.name}</div>
               <div><strong>Carro:</strong> {editingVehicle.name} ({editingVehicle.category})</div>
-              <div><strong>Nº Identificação:</strong> #{editingVehicle.number}</div>
+              <div><strong>Nº:</strong> #{editingVehicle.number}</div>
             </div>
 
             {/* Formulário técnico */}
-            <form onSubmit={handleInspectSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div className="form-group">
+            <form onSubmit={handleInspectSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <div className="form-group" style={{ margin: 0 }}>
                 <label>Decisão de Segurança</label>
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
                   {/* Botão para Aprovar */}
                   <button
                     type="button"
@@ -279,10 +288,12 @@ function InspectionPortal({ token }) {
                       justifyContent: 'center',
                       gap: '8px',
                       fontWeight: 'bold',
+                      fontSize: '0.9rem',
                       transition: 'all 0.2s',
                       background: inspectionStatus === 'APPROVED' ? 'rgba(0,230,118,0.15)' : 'transparent',
                       borderColor: inspectionStatus === 'APPROVED' ? 'var(--status-approved)' : 'var(--border-color)',
-                      color: inspectionStatus === 'APPROVED' ? 'var(--status-approved)' : 'var(--text-muted)'
+                      color: inspectionStatus === 'APPROVED' ? 'var(--status-approved)' : 'var(--text-muted)',
+                      minHeight: '48px'
                     }}
                     onClick={() => setInspectionStatus('APPROVED')}
                   >
@@ -304,10 +315,12 @@ function InspectionPortal({ token }) {
                       justifyContent: 'center',
                       gap: '8px',
                       fontWeight: 'bold',
+                      fontSize: '0.9rem',
                       transition: 'all 0.2s',
                       background: inspectionStatus === 'REJECTED' ? 'rgba(255,23,68,0.15)' : 'transparent',
                       borderColor: inspectionStatus === 'REJECTED' ? 'var(--status-rejected)' : 'var(--border-color)',
-                      color: inspectionStatus === 'REJECTED' ? 'var(--status-rejected)' : 'var(--text-muted)'
+                      color: inspectionStatus === 'REJECTED' ? 'var(--status-rejected)' : 'var(--text-muted)',
+                      minHeight: '48px'
                     }}
                     onClick={() => setInspectionStatus('REJECTED')}
                   >
@@ -318,7 +331,7 @@ function InspectionPortal({ token }) {
               </div>
 
               {/* Descrição técnica */}
-              <div className="form-group">
+              <div className="form-group" style={{ margin: 0 }}>
                 <label>Relatório Técnico & Observações</label>
                 <textarea
                   required
@@ -327,11 +340,11 @@ function InspectionPortal({ token }) {
                   className="form-control"
                   value={inspectionNotes}
                   onChange={(e) => setInspectionNotes(e.target.value)}
-                  style={{ resize: 'vertical' }}
+                  style={{ resize: 'vertical', fontSize: '16px' }}
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ display: 'flex', gap: '10px' }}>
                 <button type="submit" className="btn-primary" style={{ flexGrow: 1, justifyContent: 'center' }} disabled={submitting}>
                   {submitting ? 'Salvando...' : 'Salvar Vistoria'}
                 </button>

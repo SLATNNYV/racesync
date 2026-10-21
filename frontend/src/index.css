@@ -21,12 +21,20 @@
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --border-radius: 12px;
   --box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
+  /* Bottom nav height para iOS safe area */
+  --bottom-nav-height: 64px;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html {
+  /* Evita zoom automático em inputs no iOS */
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -44,6 +52,13 @@ body {
 button, input, select, textarea {
   font-family: inherit;
   color: inherit;
+  /* Evita zoom no iOS ao focar em inputs (font-size mínimo 16px) */
+  font-size: 16px;
+}
+
+/* Sobrescreve font-size em labels e textos menores sem causar zoom */
+.form-control {
+  font-size: 16px !important;
 }
 
 /* Animations */
@@ -55,6 +70,11 @@ button, input, select, textarea {
 @keyframes pulseGlow {
   0%, 100% { box-shadow: 0 0 15px var(--accent-red-glow); }
   50% { box-shadow: 0 0 25px rgba(255, 51, 75, 0.7); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
@@ -94,6 +114,9 @@ button, input, select, textarea {
   font-size: 0.85rem;
   transition: var(--transition-smooth);
   box-shadow: 0 4px 15px rgba(255, 51, 75, 0.3);
+  /* Área de toque mínima para iOS */
+  min-height: 44px;
+  touch-action: manipulation;
 }
 
 .btn-primary:hover {
@@ -120,6 +143,9 @@ button, input, select, textarea {
   font-family: var(--font-display);
   font-size: 0.85rem;
   transition: var(--transition-smooth);
+  /* Área de toque mínima para iOS */
+  min-height: 44px;
+  touch-action: manipulation;
 }
 
 .btn-secondary:hover {
@@ -178,8 +204,12 @@ button, input, select, textarea {
   padding: 12px 16px;
   border-radius: 8px;
   color: var(--text-main);
-  font-size: 0.95rem;
+  font-size: 16px;
   transition: var(--transition-smooth);
+  width: 100%;
+  /* Aparência padrão em iOS */
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .form-control:focus {
@@ -191,8 +221,8 @@ button, input, select, textarea {
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -208,71 +238,328 @@ button, input, select, textarea {
   background: var(--text-muted);
 }
 
-/* Responsive Design */
-.grid-container {
+/* =========================================
+   LAYOUT RESPONSIVO — APP SHELL
+   ========================================= */
+
+/* Layout desktop: sidebar + main */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.app-sidebar {
+  width: 280px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.app-main {
+  flex-grow: 1;
+  padding: 40px;
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+/* Bottom Navigation (mobile) */
+.bottom-nav {
+  display: none;
+}
+
+/* =========================================
+   GRID CONTAINERS RESPONSIVOS
+   ========================================= */
+
+.grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.grid-checkin {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
   gap: 32px;
   align-items: flex-start;
 }
-@media (max-width: 768px) {
-  .grid-container {
-    grid-template-columns: 1fr;
-  }
-  body {
-    font-size: 0.9rem;
-    padding: 0 1rem;
-  }
-  .glass-panel {
-    padding: 16px;
-    margin: 8px;
-  }
-  .btn-primary, .btn-secondary {
-    padding: 10px 20px;
-    font-size: 0.8rem;
-  }
-  .form-control {
-    padding: 10px 14px;
-    font-size: 0.85rem;
-  }
+
+.grid-inspection {
+  display: grid;
+  gap: 32px;
+  align-items: flex-start;
 }
+
+.grid-vehicles-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.grid-admin-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 900;
+  color: #fff;
+  margin-top: 4px;
+}
+
+/* =========================================
+   INSPECTION TABLE → CARDS NO MOBILE
+   ========================================= */
+.inspection-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.inspection-card-list {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* =========================================
+   MOBILE — iPhone 15: 393px viewport
+   ========================================= */
 @media (max-width: 768px) {
-  /* Tablet adjustments */
-  body {
-    font-size: 0.9rem;
-    padding: 0 1rem;
+
+  /* Sidebar vira bottom nav */
+  .app-sidebar {
+    display: none;
   }
+
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--bottom-nav-height);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    z-index: 100;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    /* Safe area para iPhone com notch/Dynamic Island */
+    padding-bottom: env(safe-area-inset-bottom);
+    justify-content: space-around;
+    align-items: center;
+    gap: 0;
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    flex: 1;
+    padding: 8px 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    transition: color 0.2s;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .bottom-nav-item.active {
+    color: var(--accent-red);
+  }
+
+  .bottom-nav-item svg {
+    flex-shrink: 0;
+  }
+
+  /* Main area ajustada para bottom nav */
+  .app-main {
+    padding: 16px 16px calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 8px) 16px;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+
+  /* Grids colapsam para coluna única */
+  .grid-2col,
+  .grid-checkin,
+  .grid-inspection {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .grid-vehicles-form {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .grid-admin-form {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .grid-admin-form .span-2 {
+    grid-column: span 1;
+  }
+
+  /* Títulos menores no mobile */
+  .page-title {
+    font-size: 1.4rem;
+  }
+
+  /* Glass panels com menos padding */
   .glass-panel {
     padding: 16px;
-    margin: 8px;
   }
-  .btn-primary, .btn-secondary {
-    padding: 10px 20px;
-    font-size: 0.8rem;
+
+  /* Mobile header visível */
+  .mobile-header {
+    display: flex !important;
   }
-  .form-control {
-    padding: 10px 14px;
+
+  /* Botões full-width no mobile */
+  .btn-mobile-full {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Header de página empilha no mobile */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .page-header .btn-primary,
+  .page-header .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Tabela vira cards no mobile */
+  .inspection-table,
+  .inspection-table thead,
+  .inspection-table tbody,
+  .inspection-table th,
+  .inspection-table td,
+  .inspection-table tr {
+    display: block;
+  }
+
+  .inspection-table thead {
+    display: none;
+  }
+
+  .inspection-table tr {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: rgba(255, 255, 255, 0.01);
+  }
+
+  .inspection-table td {
+    padding: 4px 0;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 0.85rem;
+  }
+
+  .inspection-table td:last-child {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+    justify-content: flex-end;
+  }
+
+  .inspection-table td[data-label]::before {
+    content: attr(data-label) ": ";
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    min-width: 80px;
+  }
+
+  /* Booking cards no checkin — token quebra linha */
+  .booking-token {
+    word-break: break-all;
+    font-size: 0.65rem !important;
+  }
+
+  /* Modal QR Code full-width no mobile */
+  .qr-modal-inner {
+    padding: 24px 16px !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 16px 16px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    top: auto !important;
+    transform: none !important;
+  }
+
+  /* Booking total + botão empilha */
+  .booking-total-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .booking-total-row .btn-primary {
+    width: 100%;
+    justify-content: center;
   }
 }
 
-@media (max-width: 480px) {
-  /* Mobile adjustments */
-  body {
-    font-size: 0.85rem;
+/* Telas muito pequenas (< 380px — iPhones menores) */
+@media (max-width: 380px) {
+  .app-main {
+    padding: 12px 12px calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 4px) 12px;
   }
+
+  .page-title {
+    font-size: 1.2rem;
+  }
+
   .glass-panel {
     padding: 12px;
   }
-  .btn-primary, .btn-secondary {
-    width: 100%;
-    padding: 12px;
-    font-size: 0.75rem;
-  }
-  .form-group {
-    flex-direction: column;
-  }
-  .form-control {
-    font-size: 0.8rem;
+
+  .bottom-nav-item {
+    font-size: 0.52rem;
   }
 }

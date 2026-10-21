@@ -5,7 +5,7 @@ import Vehicles from './pages/Vehicles'
 import Bookings from './pages/Bookings'
 import InspectionPortal from './pages/InspectionPortal'
 import CheckIn from './pages/CheckIn'
-import { LogOut, Car, Calendar, CheckSquare, LayoutDashboard, User, QrCode } from 'lucide-react'
+import { LogOut, Car, Calendar, CheckSquare, LayoutDashboard, User, QrCode, Menu, X } from 'lucide-react'
 
 // Backend base URL
 export const API_BASE_URL = 'http://localhost:8080/api'
@@ -13,8 +13,9 @@ export const API_BASE_URL = 'http://localhost:8080/api'
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '')
   const [user, setUser] = useState(null)
-  const [currentPage, setCurrentPage] = useState('dashboard') // dashboard, vehicles, bookings, inspection
+  const [currentPage, setCurrentPage] = useState('dashboard')
   const [loading, setLoading] = useState(true)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // Fetch current user details on load or token change
   useEffect(() => {
@@ -60,6 +61,11 @@ function App() {
     setCurrentPage('dashboard')
   }
 
+  const navigate = (page) => {
+    setCurrentPage(page)
+    setMobileMenuOpen(false)
+  }
+
   if (loading) {
     return (
       <div style={{
@@ -69,11 +75,13 @@ function App() {
         justifyContent: 'center',
         background: '#090a0f',
         color: '#ff334b',
-        fontSize: '1.5rem',
+        fontSize: '1.1rem',
         fontWeight: 'bold',
-        fontFamily: 'Orbitron, sans-serif'
+        fontFamily: 'Orbitron, sans-serif',
+        textAlign: 'center',
+        padding: '20px'
       }}>
-        CARREGANDO RACESYNC ARRANCADA...
+        CARREGANDO RACESYNC...
       </div>
     )
   }
@@ -85,18 +93,21 @@ function App() {
   // Helper to check role
   const isManagerOrOrganizer = user.role === 'MANAGER' || user.role === 'ORGANIZER'
 
+  // Nav items config
+  const navItems = [
+    { id: 'dashboard', label: 'Painel', icon: LayoutDashboard },
+    { id: 'vehicles', label: 'Veículos', icon: Car },
+    { id: 'bookings', label: 'Puxadas', icon: Calendar },
+    ...(isManagerOrOrganizer ? [
+      { id: 'inspection', label: 'Vistoria', icon: CheckSquare },
+      { id: 'checkin', label: 'Check-in', icon: QrCode },
+    ] : []),
+  ]
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
-      {/* Sidebar Navigation */}
-      <aside style={{
-        width: '280px',
-        background: 'var(--bg-secondary)',
-        borderRight: '1px solid var(--border-color)',
-        padding: '24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '32px'
-      }}>
+    <div className="app-shell">
+      {/* ─── Sidebar Desktop ─── */}
+      <aside className="app-sidebar">
         {/* Logo / Brand */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
@@ -149,65 +160,33 @@ function App() {
               {user.name}
             </div>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              {user.role === 'MANAGER' || user.role === 'ORGANIZER' ? 'Administrador (ADM)' : 'Piloto'}
+              {isManagerOrOrganizer ? 'Administrador (ADM)' : 'Piloto'}
             </div>
           </div>
         </div>
 
         {/* Navigation Items */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexGrow: 1 }}>
-          <button 
-            className="btn-nav"
-            style={navItemStyle(currentPage === 'dashboard')}
-            onClick={() => setCurrentPage('dashboard')}
-          >
-            <LayoutDashboard size={18} />
-            Painel do Usuário
-          </button>
-          
-          <button 
-            className="btn-nav"
-            style={navItemStyle(currentPage === 'vehicles')}
-            onClick={() => setCurrentPage('vehicles')}
-          >
-            <Car size={18} />
-            Meus Veículos
-          </button>
-          
-          <button 
-            className="btn-nav"
-            style={navItemStyle(currentPage === 'bookings')}
-            onClick={() => setCurrentPage('bookings')}
-          >
-            <Calendar size={18} />
-            Agendar Puxadas
-          </button>
-
-          {isManagerOrOrganizer && (
-            <>
-              <button 
-                className="btn-nav"
-                style={navItemStyle(currentPage === 'inspection')}
-                onClick={() => setCurrentPage('inspection')}
-              >
-                <CheckSquare size={18} />
-                Vistoria Técnica
-              </button>
-              <button 
-                className="btn-nav"
-                style={navItemStyle(currentPage === 'checkin')}
-                onClick={() => setCurrentPage('checkin')}
-              >
-                <QrCode size={18} />
-                Portaria & Check-in
-              </button>
-            </>
-          )}
+          {navItems.map(item => (
+            <button
+              key={item.id}
+              className="btn-nav"
+              style={navItemStyle(currentPage === item.id)}
+              onClick={() => navigate(item.id)}
+            >
+              <item.icon size={18} />
+              {item.label === 'Painel' ? 'Painel do Usuário' :
+               item.label === 'Veículos' ? 'Meus Veículos' :
+               item.label === 'Puxadas' ? 'Agendar Puxadas' :
+               item.label === 'Vistoria' ? 'Vistoria Técnica' :
+               'Portaria & Check-in'}
+            </button>
+          ))}
         </nav>
 
         {/* Logout */}
-        <button 
-          className="btn-secondary" 
+        <button
+          className="btn-secondary"
           onClick={logout}
           style={{ justifyContent: 'center', gap: '10px' }}
         >
@@ -216,14 +195,83 @@ function App() {
         </button>
       </aside>
 
-      {/* Main Page Area */}
-      <main style={{ flexGrow: 1, padding: '40px', overflowY: 'auto', maxHeight: '100vh' }}>
-        {currentPage === 'dashboard' && <Dashboard token={token} user={user} navigate={setCurrentPage} />}
+      {/* ─── Main Page Area ─── */}
+      <main className="app-main">
+        {/* Mobile Header */}
+        <div style={{
+          display: 'none',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px',
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          background: 'rgba(9, 10, 15, 0.9)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          padding: '12px 0',
+          margin: '0 0 20px 0',
+        }} className="mobile-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, var(--accent-red), #e60026)',
+              padding: '6px',
+              borderRadius: '8px',
+            }}>
+              <Calendar size={18} color="#fff" />
+            </div>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1rem', color: '#fff' }}>
+              RACE<span style={{ color: 'var(--accent-red)' }}>SYNC</span>
+            </span>
+          </div>
+          <button
+            onClick={logout}
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              padding: '8px',
+              cursor: 'pointer',
+              color: 'var(--text-muted)',
+              display: 'flex',
+              alignItems: 'center',
+              minHeight: '44px',
+              minWidth: '44px',
+              justifyContent: 'center',
+            }}
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
+
+        {currentPage === 'dashboard' && <Dashboard token={token} user={user} navigate={navigate} />}
         {currentPage === 'vehicles' && <Vehicles token={token} />}
         {currentPage === 'bookings' && <Bookings token={token} />}
         {currentPage === 'inspection' && isManagerOrOrganizer && <InspectionPortal token={token} />}
         {currentPage === 'checkin' && isManagerOrOrganizer && <CheckIn token={token} />}
       </main>
+
+      {/* ─── Bottom Navigation Mobile ─── */}
+      <nav className="bottom-nav">
+        {navItems.map(item => (
+          <button
+            key={item.id}
+            className={`bottom-nav-item${currentPage === item.id ? ' active' : ''}`}
+            onClick={() => navigate(item.id)}
+          >
+            <item.icon size={20} />
+            <span>{item.label}</span>
+          </button>
+        ))}
+        <button
+          className="bottom-nav-item"
+          onClick={logout}
+          style={{ color: 'var(--status-rejected)' }}
+        >
+          <LogOut size={20} />
+          <span>Sair</span>
+        </button>
+      </nav>
     </div>
   )
 }

@@ -106,19 +106,17 @@ function Vehicles({ token }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }} className="animate-fade-in">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }} className="animate-fade-in">
       
       {/* Cabeçalho da Página */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="page-header">
         <div>
           <span style={{ fontSize: '0.8rem', color: 'var(--accent-red)', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', fontFamily: 'var(--font-display)' }}>
             GARAGEM
           </span>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 900, color: '#fff', marginTop: '4px' }}>
-            MEUS VEÍCULOS
-          </h2>
+          <h2 className="page-title">MEUS VEÍCULOS</h2>
         </div>
-        <button className="btn-primary" onClick={() => setShowAddForm(!showAddForm)}>
+        <button className="btn-primary btn-mobile-full" onClick={() => setShowAddForm(!showAddForm)}>
           <Plus size={16} />
           {showAddForm ? 'Cancelar' : 'Cadastrar Veículo'}
         </button>
@@ -137,41 +135,42 @@ function Vehicles({ token }) {
         </div>
       )}
 
-      {/* Formulário Lateral de Inclusão de Veículo */}
+      {/* Formulário de Inclusão de Veículo */}
       {showAddForm && (
-        <div className="glass-panel" style={{ maxWidth: '600px' }}>
-          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', marginBottom: '20px', color: '#fff' }}>
+        <div className="glass-panel">
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', marginBottom: '16px', color: '#fff' }}>
             CADASTRAR NOVO VEÍCULO
           </h3>
           <form onSubmit={handleAddVehicle} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div className="form-group">
               <label>Nome do Veículo</label>
-              <input 
-                type="text" 
-                required 
-                placeholder="Ex: Honda Civic Si" 
+              <input
+                type="text"
+                required
+                placeholder="Ex: Honda Civic Si"
                 className="form-control"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div className="form-group">
-                <label>Número do Carro (Apenas números)</label>
-                <input 
-                  type="text" 
-                  required 
-                  placeholder="Ex: 77" 
+            {/* Grid responsivo: número e categoria lado a lado no desktop, coluna única no mobile */}
+            <div className="grid-vehicles-form">
+              <div className="form-group" style={{ margin: 0 }}>
+                <label>Nº do Carro</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: 77"
                   className="form-control"
                   value={number}
                   onChange={handleNumberChange}
                 />
               </div>
 
-              <div className="form-group">
+              <div className="form-group" style={{ margin: 0 }}>
                 <label>Categoria de Inscrição</label>
-                <select 
+                <select
                   className="form-control"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
@@ -187,7 +186,7 @@ function Vehicles({ token }) {
               </div>
             </div>
 
-            <button type="submit" className="btn-primary" style={{ alignSelf: 'flex-start' }}>
+            <button type="submit" className="btn-primary" style={{ alignSelf: 'flex-start', minWidth: '140px' }}>
               Salvar Veículo
             </button>
           </form>
@@ -198,23 +197,23 @@ function Vehicles({ token }) {
       {loading ? (
         <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px' }}>Carregando garagem...</div>
       ) : vehicles.length === 0 ? (
-        <div className="glass-panel" style={{ textAlign: 'center', padding: '50px', color: 'var(--text-muted)' }}>
+        <div className="glass-panel" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
           <Car size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
           <p>Você não possui nenhum veículo cadastrado na sua garagem.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
           {vehicles.map(vehicle => (
-            <div key={vehicle.id} className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div key={vehicle.id} className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               
-              {/* Nome do carro, ano, placa e Distintivo de Status de Vistoria */}
+              {/* Nome do carro e Distintivo de Status de Vistoria */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <h4 style={{ fontFamily: 'var(--font-display)', color: '#fff', fontSize: '1.1rem' }}>
+                  <h4 style={{ fontFamily: 'var(--font-display)', color: '#fff', fontSize: '1rem' }}>
                     {vehicle.name}
                   </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    <span>Número do Veículo: <strong style={{ color: 'var(--accent-red)' }}>#{vehicle.number}</strong></span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '4px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    <span>Nº: <strong style={{ color: 'var(--accent-red)' }}>#{vehicle.number}</strong></span>
                     <span>Categoria: <strong>{vehicle.category}</strong></span>
                   </div>
                 </div>
@@ -237,11 +236,11 @@ function Vehicles({ token }) {
                 border: '1px solid var(--border-color)',
                 borderRadius: '8px',
                 padding: '12px',
-                fontSize: '0.85rem'
+                fontSize: '0.82rem'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.5px' }}>
                   <Info size={14} />
-                  Histórico de Vistoria Técnica
+                  Histórico de Vistoria
                 </div>
                 <p style={{ color: vehicle.inspectionNotes ? 'var(--text-main)' : 'var(--text-muted)', fontStyle: vehicle.inspectionNotes ? 'normal' : 'italic' }}>
                   {vehicle.inspectionNotes || 'Nenhuma observação técnica registrada ainda.'}
