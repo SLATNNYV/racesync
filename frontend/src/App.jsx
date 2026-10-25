@@ -8,7 +8,7 @@ import CheckIn from './pages/CheckIn'
 import { LogOut, Car, Calendar, CheckSquare, LayoutDashboard, User, QrCode } from 'lucide-react'
 
 // Backend base URL
-export const API_BASE_URL = 'http://localhost:8080/api'
+export const API_BASE_URL = 'https://racesync-t9y9.onrender.com'
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '')
