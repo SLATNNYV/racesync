@@ -22,9 +22,9 @@ public class DatabaseInitializer implements CommandLineRunner {
         if (userRepository.count() == 0) {
             User admin = User.builder()
                     .name("Administrador Principal")
-                    .email("admin@racesync.com")
-                    .cpf("00000000000")
-                    .password(passwordEncoder.encode("admin"))
+                    .email("vinnyrace@racesync.com")
+                    .cpf("10671874993")
+                    .password(passwordEncoder.encode("123456"))
                     .role(Role.MANAGER)
                     .build();
 

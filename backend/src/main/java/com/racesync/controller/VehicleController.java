@@ -80,6 +80,11 @@ public class VehicleController {
         return ResponseEntity.ok(vehicles);
     }
 
+    @GetMapping("/o-que-eu-quiser")
+    public ResponseEntity<?> getteste() {
+        List<Vehicle> vehicles = vehicleRepository.buscarPorProprietario(1L);
+        return ResponseEntity.ok(vehicles);
+    }
     /**
      * Rota administrativa para listar todos os veículos (/api/vehicles/all) - Método GET.
      * Usada pelos gestores para ver os veículos inscritos e pendentes de vistoria técnica.
