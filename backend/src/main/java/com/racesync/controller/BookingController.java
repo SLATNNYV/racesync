@@ -78,12 +78,17 @@ public class BookingController {
             eventRepository.save(event);
         }
 
+        String paymentMethod = (request.getPaymentMethod() != null && !request.getPaymentMethod().isBlank())
+                ? request.getPaymentMethod().trim().toUpperCase() : "PIX";
+
         TrackBooking booking = TrackBooking.builder()
                 .event(event)
                 .pilot(userPrincipal.getUser())
                 .vehicle(vehicle)
                 .timeSlot(request.getTimeSlot())
                 .status("CONFIRMED")
+                .paymentMethod(paymentMethod)
+                .paymentStatus("PAID")
                 .qrCodeToken(UUID.randomUUID().toString())
                 .build();
 
@@ -169,6 +174,8 @@ public class BookingController {
 
         @NotNull
         private Boolean bookBox;
+
+        private String paymentMethod;
     }
 
     @Data

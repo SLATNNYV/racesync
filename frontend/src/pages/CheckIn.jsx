@@ -269,6 +269,7 @@ function CheckIn({ token }) {
                     <div><strong>Evento:</strong> {scanResult.booking.event?.name}</div>
                     <div><strong>Chave / Sorteio:</strong> {scanResult.booking.timeSlot}</div>
                     <div><strong>Carro:</strong> {scanResult.booking.vehicle?.name} (Nº #{scanResult.booking.vehicle?.number})</div>
+                    <div><strong>Pagamento:</strong> <span style={{ color: 'var(--status-approved)', fontWeight: 'bold' }}>PAGO ({scanResult.booking.paymentMethod === 'CREDIT_CARD' ? 'Cartão de Crédito' : 'PIX'})</span></div>
                   </div>
                 </>
               )}
@@ -365,7 +366,7 @@ function CheckIn({ token }) {
                         <span className="badge badge-approved" style={{ fontSize: '0.65rem' }}>Na Puxada</span>
                       ) : (
                         <>
-                          <div style={{ display: 'flex', gap: '4px' }}>
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                             {isInspected ? (
                               <span className="badge badge-approved" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>Vistoria OK</span>
                             ) : isRejected ? (
@@ -373,6 +374,9 @@ function CheckIn({ token }) {
                             ) : (
                               <span className="badge badge-pending" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>Pendente</span>
                             )}
+                            <span className="badge badge-approved" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>
+                              {booking.paymentMethod === 'CREDIT_CARD' ? 'Cartão' : 'PIX'} Pago
+                            </span>
                           </div>
 
                           {/* Botão de Check-in Manual */}

@@ -27,16 +27,17 @@ cd $BaseDir
 # Kill any existing processes bound to ports 8080 or 5173
 Get-Process | Where-Object { $_.MainWindowTitle -like "*Vite*" -or $_.ProcessName -like "*java*" } | Stop-Process -Force -ErrorAction SilentlyContinue
 
-# Start Spring Boot Backend in the background
+# Start Spring Boot Backend in the background with explicit environment
 Write-Host "Starting Spring Boot Backend (API port 8080)..."
 $MvnCmd = Join-Path $MavenDir "bin\mvn.cmd"
-Start-Process -FilePath $MvnCmd -ArgumentList "spring-boot:run" -WorkingDirectory (Join-Path $BaseDir "backend") -RedirectStandardOutput (Join-Path $BaseDir "backend_out.log") -RedirectStandardError (Join-Path $BaseDir "backend_err.log") -NoNewWindow
+$BackendScript = "`$env:JAVA_HOME = '$JdkPath'; `$env:Path = '$JdkPath\bin;$MavenDir\bin;' + `$env:Path; Set-Location '$BaseDir\backend'; & '$MvnCmd' compile spring-boot:run -DskipTests"
+Start-Process -FilePath "powershell.exe" -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $BackendScript -RedirectStandardOutput (Join-Path $BaseDir "backend_out.log") -RedirectStandardError (Join-Path $BaseDir "backend_err.log") -NoNewWindow
 Write-Host "Backend API process spawned. Logs: backend_out.log / backend_err.log"
 
 # Wait for backend to be ready on port 8080
 Write-Host "Waiting for Backend to initialize on port 8080..."
 $attempts = 0
-while ($attempts -lt 20) {
+while ($attempts -lt 40) {
     Start-Sleep -Seconds 1
     $conn = Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue
     if ($conn) {

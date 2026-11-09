@@ -241,9 +241,9 @@ function Dashboard({ token, user, navigate }) {
                       <div>Chave: <strong style={{ color: '#fff' }}>{booking.timeSlot}</strong></div>
                       <div>Carro: {booking.vehicle?.name || 'Veículo'} (#{booking.vehicle?.number || 'S/N'})</div>
                       
-                      {/* Distintivo de status da vistoria */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                        Vistoria:{' '}
+                      {/* Distintivo de status da vistoria e pagamento */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '2px' }}>
+                        <span>Vistoria:</span>
                         {booking.vehicle?.inspectionStatus === 'APPROVED' ? (
                           <span className="badge badge-approved" style={{ fontSize: '0.65rem' }}>Aprovado</span>
                         ) : booking.vehicle?.inspectionStatus === 'REJECTED' ? (
@@ -251,6 +251,9 @@ function Dashboard({ token, user, navigate }) {
                         ) : (
                           <span className="badge badge-pending" style={{ fontSize: '0.65rem' }}>Pendente</span>
                         )}
+                        <span className="badge badge-approved" style={{ fontSize: '0.65rem' }}>
+                          {booking.paymentMethod === 'CREDIT_CARD' ? '💳 Cartão' : '⚡ PIX'} Pago
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -337,6 +340,12 @@ function Dashboard({ token, user, navigate }) {
                 ) : (
                   <span style={{ color: 'var(--status-pending)', fontWeight: 'bold' }}>PENDENTE</span>
                 )}
+              </div>
+              <div>
+                <strong>Pagamento:</strong>{' '}
+                <span style={{ color: 'var(--status-approved)', fontWeight: 'bold' }}>
+                  PAGO ({selectedBooking.paymentMethod === 'CREDIT_CARD' ? 'Cartão de Crédito' : 'PIX'})
+                </span>
               </div>
             </div>
 

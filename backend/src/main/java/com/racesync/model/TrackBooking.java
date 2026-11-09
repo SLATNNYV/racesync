@@ -39,4 +39,83 @@ public class TrackBooking {
 
     @Column(nullable = false)
     private String status; // "CONFIRMED", "PENDING", etc.
+
+    @Column(name = "payment_method")
+    private String paymentMethod; // "PIX", "CREDIT_CARD"
+
+    @Column(name = "payment_status")
+    private String paymentStatus; // "PAID", "PENDING"
+
+    // Métodos explícitos para compatibilidade total mesmo sem plugin Lombok na IDE
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Event getEvent() {
+        return event;
+    }
+
+    public void setEvent(Event event) {
+        this.event = event;
+    }
+
+    public User getPilot() {
+        return pilot;
+    }
+
+    public void setPilot(User pilot) {
+        this.pilot = pilot;
+    }
+
+    public Vehicle getVehicle() {
+        return vehicle;
+    }
+
+    public void setVehicle(Vehicle vehicle) {
+        this.vehicle = vehicle;
+    }
+
+    public String getTimeSlot() {
+        return timeSlot;
+    }
+
+    public void setTimeSlot(String timeSlot) {
+        this.timeSlot = timeSlot;
+    }
+
+    public String getQrCodeToken() {
+        return qrCodeToken;
+    }
+
+    public void setQrCodeToken(String qrCodeToken) {
+        this.qrCodeToken = qrCodeToken;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
 }
