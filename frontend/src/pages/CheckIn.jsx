@@ -153,13 +153,15 @@ function CheckIn({ token }) {
   }
 
   // Filtra as reservas de acordo com o texto digitado na barra de buscas
-  const filteredBookings = bookings.filter(b =>
-    b.pilot?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    b.vehicle?.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    b.vehicle?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    b.event?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    b.qrCodeToken.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredBookings = bookings.filter(b => {
+    const term = (searchTerm || '').toLowerCase()
+    const pilotName = String(b.pilot?.name || '').toLowerCase()
+    const vehicleNumber = String(b.vehicle?.number || '').toLowerCase()
+    const vehicleName = String(b.vehicle?.name || '').toLowerCase()
+    const eventName = String(b.event?.name || '').toLowerCase()
+    const token = String(b.qrCodeToken || '').toLowerCase()
+    return pilotName.includes(term) || vehicleNumber.includes(term) || vehicleName.includes(term) || eventName.includes(term) || token.includes(term)
+  })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }} className="animate-fade-in">

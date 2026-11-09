@@ -3,8 +3,8 @@ package com.racesync.controller;
 import com.racesync.model.InspectionStatus;
 import com.racesync.model.User;
 import com.racesync.model.Vehicle;
-import com.racesync.repository.VehicleRepository;
 import com.racesync.security.UserPrincipal;
+import com.racesync.services.VehicleService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -14,123 +14,93 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Controller responsável pelo gerenciamento de veículos dos pilotos (Garagem) e pela realização de vistorias técnicas.
- * A anotação @RestController declara endpoints REST JSON.
- * A anotação @RequestMapping amarra o endpoint base à rota "/api/vehicles".
- * A anotação @RequiredArgsConstructor gera automaticamente o construtor injetando as dependências.
+ * Utiliza o VehicleService como camada de regras de negócio.
  */
 @RestController
 @RequestMapping("/api/vehicles")
 @RequiredArgsConstructor
 public class VehicleController {
 
-    // Repositório JPA para lidar com as operações de persistência de veículos
-    private final VehicleRepository vehicleRepository;
+    private final VehicleService vehicleService;
 
     /**
      * Rota para cadastrar um novo veículo (/api/vehicles) - Método POST.
-     * Vincula o veículo de forma automática ao piloto autenticado.
-     * Quando criado, o status de vistoria é definido obrigatoriamente como PENDING (Pendente) para forçar a vistoria técnica.
-     * 
-     * @param userPrincipal Usuário de sessão autenticado (Piloto)
-     * @param vehicleRequest Dados estruturados do veículo (nome, numero, categoria)
-     * @return Retorna o veículo salvo no banco
+     * Vincula o veículo de forma automática ao piloto autenticado com status PENDING.
      */
     @PostMapping
     public ResponseEntity<?> createVehicle(@AuthenticationPrincipal UserPrincipal userPrincipal,
                                            @Valid @RequestBody VehicleRequest vehicleRequest) {
         if (userPrincipal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("error", "Usuário não autenticado"));
         }
 
         User owner = userPrincipal.getUser();
-        
-        // Constrói a entidade Vehicle definindo o status inicial pendente
+
         Vehicle vehicle = Vehicle.builder()
-                .name(vehicleRequest.getName())
-                .number(vehicleRequest.getNumber())
-                .category(vehicleRequest.getCategory())
+                .name(vehicleRequest.getName().trim())
+                .number(vehicleRequest.getNumber().trim())
+                .category(vehicleRequest.getCategory().trim())
                 .owner(owner)
-                .inspectionStatus(InspectionStatus.PENDING) // Status inicial
-                .inspectionNotes("Aguardando vistoria técnica presencial.") // Nota padrão
+                .inspectionStatus(InspectionStatus.PENDING)
+                .inspectionNotes("Aguardando vistoria técnica presencial.")
                 .build();
 
-        Vehicle savedVehicle = vehicleRepository.save(vehicle);
+        Vehicle savedVehicle = vehicleService.cadastrar(vehicle);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedVehicle);
     }
 
     /**
      * Rota para listar veículos do piloto atual (/api/vehicles) - Método GET.
      * Filtra apenas os veículos pertencentes ao ID do usuário autenticado atual.
-     * 
-     * @param userPrincipal Usuário de sessão autenticado
-     * @return Lista de veículos do piloto
      */
     @GetMapping
     public ResponseEntity<?> getMyVehicles(@AuthenticationPrincipal UserPrincipal userPrincipal) {
         if (userPrincipal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap("error", "Usuário não autenticado"));
         }
 
-        List<Vehicle> vehicles = vehicleRepository.findByOwnerId(userPrincipal.getId());
+        List<Vehicle> vehicles = vehicleService.listarPorProprietario(userPrincipal.getId());
         return ResponseEntity.ok(vehicles);
     }
 
-    @GetMapping("/o-que-eu-quiser")
-    public ResponseEntity<?> getteste() {
-        List<Vehicle> vehicles = vehicleRepository.buscarPorProprietario(1L);
-        return ResponseEntity.ok(vehicles);
-    }
     /**
      * Rota administrativa para listar todos os veículos (/api/vehicles/all) - Método GET.
      * Usada pelos gestores para ver os veículos inscritos e pendentes de vistoria técnica.
-     * Restrita a gestores (MANAGER) ou organizadores (ORGANIZER) via @PreAuthorize.
-     * 
-     * @return Lista completa de veículos cadastrados no sistema
      */
     @GetMapping("/all")
     @PreAuthorize("hasRole('MANAGER') or hasRole('ORGANIZER')")
     public ResponseEntity<?> getAllVehicles() {
-        List<Vehicle> vehicles = vehicleRepository.findAll();
+        List<Vehicle> vehicles = vehicleService.listarTodos();
         return ResponseEntity.ok(vehicles);
     }
 
     /**
      * Rota administrativa para registrar vistoria do veículo (/api/vehicles/{id}/inspect) - Método PUT.
      * Permite alterar o status da vistoria de um veículo para APROVADO ("APPROVED") ou REPROVADO ("REJECTED") com notas explicativas.
-     * O acesso é restrito apenas para gestores (MANAGER) ou organizadores (ORGANIZER).
-     * 
-     * @param id Identificador único (ID) do veículo que está sendo inspecionado
-     * @param request Payload contendo o novo status ("APPROVED" ou "REJECTED") e anotações técnicas
-     * @return Retorna o veículo atualizado no banco
      */
     @PutMapping("/{id}/inspect")
     @PreAuthorize("hasRole('MANAGER') or hasRole('ORGANIZER')")
     public ResponseEntity<?> inspectVehicle(@PathVariable Long id,
                                             @Valid @RequestBody InspectionRequest request) {
-        // Busca o veículo pelo ID
-        Optional<Vehicle> optionalVehicle = vehicleRepository.findById(id);
+        Optional<Vehicle> optionalVehicle = vehicleService.buscarPorId(id);
         if (optionalVehicle.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonMap("error", "Veículo não encontrado."));
         }
 
-        Vehicle vehicle = optionalVehicle.get();
-        
-        // Tenta converter a string de status para o Enum InspectionStatus
+        InspectionStatus status;
         try {
-            InspectionStatus status = InspectionStatus.valueOf(request.getStatus().toUpperCase());
-            vehicle.setInspectionStatus(status);
+            status = InspectionStatus.valueOf(request.getStatus().trim().toUpperCase());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Status de vistoria inválido: " + request.getStatus());
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Status de vistoria inválido: " + request.getStatus()));
         }
 
-        // Salva as notas de inspeção detalhadas informadas pelo gestor
-        vehicle.setInspectionNotes(request.getNotes());
-        Vehicle updatedVehicle = vehicleRepository.save(vehicle);
+        Vehicle updatedVehicle = vehicleService.registrarVistoria(id, status, request.getNotes());
         return ResponseEntity.ok(updatedVehicle);
     }
 

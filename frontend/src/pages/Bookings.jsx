@@ -10,7 +10,7 @@ import { Calendar, Car, Clock, Box, DollarSign, CheckCircle2, ShieldAlert } from
  * 
  * @param {string} token - Token de acesso JWT
  */
-function Bookings({ token }) {
+function Bookings({ token, navigate }) {
   // Listas buscadas do servidor
   const [events, setEvents] = useState([])
   const [vehicles, setVehicles] = useState([])
@@ -94,10 +94,16 @@ function Bookings({ token }) {
         })
       })
 
-      const data = await response.json()
+      let data
+      const contentType = response.headers.get('content-type')
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json()
+      } else {
+        data = await response.text()
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erro ao processar reserva.')
+        throw new Error(typeof data === 'string' ? data : (data.error || data.message || 'Erro ao processar reserva.'))
       }
 
       // Salva os dados de retorno para exibir o cupom/recibo de agendamento na tela
@@ -145,10 +151,10 @@ function Bookings({ token }) {
           <div><strong>Data:</strong> {successBooking.event.date}</div>
           <div><strong>Puxada/Categoria:</strong> {successBooking.timeSlot}</div>
           <div><strong>Carro:</strong> {successBooking.vehicle.name} (Nº #{successBooking.vehicle.number})</div>
-          <div><strong>Taxa Inscrição:</strong> R$ {successBooking.event.registrationFee.toFixed(2)}</div>
+          <div><strong>Taxa Inscrição:</strong> R$ {Number(successBooking.event?.registrationFee || 0).toFixed(2)}</div>
         </div>
 
-        <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => window.location.reload()}>
+        <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate ? navigate('dashboard') : window.location.reload()}>
           Ir para Minhas Credenciais
         </button>
       </div>
@@ -182,7 +188,7 @@ function Bookings({ token }) {
           <p style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.9rem' }}>
             Para agendar uma puxada, é obrigatório ter pelo menos um veículo cadastrado para vistoria técnica.
           </p>
-          <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => window.location.reload()}>
+          <button className="btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate ? navigate('vehicles') : window.location.reload()}>
             Cadastrar Veículo Agora
           </button>
         </div>
@@ -200,7 +206,7 @@ function Bookings({ token }) {
               >
                 {events.map(event => (
                   <option key={event.id} value={event.id}>
-                    {event.name} ({event.date}) — R$ {event.registrationFee.toFixed(2)}
+                    {event.name} ({event.date}) — R$ {Number(event.registrationFee || 0).toFixed(2)}
                   </option>
                 ))}
               </select>
@@ -276,32 +282,45 @@ function Bookings({ token }) {
           </div>
 
           {/* Opção para solicitar Box Coberto */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '12px',
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px solid var(--border-color)',
-              padding: '14px',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}
-            onClick={() => setBookBox(!bookBox)}
-          >
-            <input
-              type="checkbox"
-              checked={bookBox}
-              onChange={() => {}}
-              style={{ marginTop: '3px', cursor: 'pointer', width: '18px', height: '18px', flexShrink: 0 }}
-            />
-            <div>
-              <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem' }}>Reservar Vaga de Box</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Desejo reservar um espaço coberto de garagem/box na pista para manutenção técnica do veículo.
+          {(() => {
+            const hasBoxes = selectedEvent ? selectedEvent.boxSlotsRemaining > 0 : true
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid var(--border-color)',
+                  padding: '14px',
+                  borderRadius: '8px',
+                  cursor: hasBoxes ? 'pointer' : 'not-allowed',
+                  opacity: hasBoxes ? 1 : 0.6
+                }}
+                onClick={() => {
+                  if (hasBoxes) setBookBox(!bookBox)
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={bookBox && hasBoxes}
+                  disabled={!hasBoxes}
+                  onChange={() => {}}
+                  style={{ marginTop: '3px', cursor: hasBoxes ? 'pointer' : 'not-allowed', width: '18px', height: '18px', flexShrink: 0 }}
+                />
+                <div>
+                  <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.9rem' }}>
+                    Reservar Vaga de Box {hasBoxes ? '' : '(Esgotado para este evento)'}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    {hasBoxes
+                      ? `Desejo reservar um espaço coberto de garagem/box na pista (${selectedEvent?.boxSlotsRemaining} vagas restantes).`
+                      : 'Não há vagas de box disponíveis no momento para este evento.'}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            )
+          })()}
 
           {/* Total + Botão */}
           {selectedEvent && (
@@ -321,7 +340,7 @@ function Bookings({ token }) {
                   fontWeight: 900,
                   color: '#fff',
                 }}>
-                  R$ {selectedEvent.registrationFee.toFixed(2)}
+                  R$ {Number(selectedEvent.registrationFee || 0).toFixed(2)}
                 </div>
               </div>
               

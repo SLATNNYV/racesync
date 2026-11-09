@@ -1,5 +1,6 @@
 package com.racesync.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Vehicle {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,6 +30,7 @@ public class Vehicle {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "owner_id", nullable = false)
+    @JsonIgnoreProperties({"password", "hibernateLazyInitializer", "handler"})
     private User owner;
 
     @Enumerated(EnumType.STRING)
@@ -36,4 +39,61 @@ public class Vehicle {
 
     @Column(columnDefinition = "TEXT")
     private String inspectionNotes;
+
+    // Métodos explícitos para garantir compatibilidade total mesmo sem plugin Lombok na IDE
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getNumber() {
+        return number;
+    }
+
+    public void setNumber(String number) {
+        this.number = number;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
+    }
+
+    public InspectionStatus getInspectionStatus() {
+        return inspectionStatus;
+    }
+
+    public void setInspectionStatus(InspectionStatus inspectionStatus) {
+        this.inspectionStatus = inspectionStatus;
+    }
+
+    public String getInspectionNotes() {
+        return inspectionNotes;
+    }
+
+    public void setInspectionNotes(String inspectionNotes) {
+        this.inspectionNotes = inspectionNotes;
+    }
 }

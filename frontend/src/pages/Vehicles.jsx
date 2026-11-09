@@ -86,7 +86,18 @@ function Vehicles({ token }) {
       })
 
       if (!response.ok) {
-        throw new Error('Erro ao cadastrar veículo. Verifique os dados.')
+        let errMessage = 'Erro ao cadastrar veículo. Verifique os dados.'
+        try {
+          const contentType = response.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            const errData = await response.json()
+            errMessage = errData.error || errData.message || errMessage
+          } else {
+            const errText = await response.text()
+            if (errText) errMessage = errText
+          }
+        } catch (_) {}
+        throw new Error(errMessage)
       }
 
       const newVehicle = await response.json()

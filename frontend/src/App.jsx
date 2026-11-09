@@ -8,7 +8,7 @@ import CheckIn from './pages/CheckIn'
 import { LogOut, Car, Calendar, CheckSquare, LayoutDashboard, User, QrCode } from 'lucide-react'
 
 // Backend base URL
-export const API_BASE_URL = 'https://racesync-t9y9.onrender.com'
+export const API_BASE_URL = 'http://localhost:8080/api'
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || '')
@@ -63,7 +63,6 @@ function App() {
 
   const navigate = (page) => {
     setCurrentPage(page)
-    setMobileMenuOpen(false)
   }
 
   if (loading) {
@@ -246,9 +245,12 @@ function App() {
 
         {currentPage === 'dashboard' && <Dashboard token={token} user={user} navigate={navigate} />}
         {currentPage === 'vehicles' && <Vehicles token={token} />}
-        {currentPage === 'bookings' && <Bookings token={token} />}
+        {currentPage === 'bookings' && <Bookings token={token} navigate={navigate} />}
         {currentPage === 'inspection' && isManagerOrOrganizer && <InspectionPortal token={token} />}
         {currentPage === 'checkin' && isManagerOrOrganizer && <CheckIn token={token} />}
+        {(!isManagerOrOrganizer && (currentPage === 'inspection' || currentPage === 'checkin')) && (
+          <Dashboard token={token} user={user} navigate={navigate} />
+        )}
       </main>
 
       {/* ─── Bottom Navigation Mobile ─── */}

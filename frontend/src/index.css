@@ -219,6 +219,28 @@ button, input, select, textarea {
   box-shadow: 0 0 10px rgba(255, 51, 75, 0.15);
 }
 
+/* Select dropdown dark theme */
+select.form-control {
+  background-color: #1a1c2e;
+  color: var(--text-main);
+  cursor: pointer;
+  color-scheme: dark;
+}
+
+select.form-control option {
+  background-color: #1a1c2e;
+  color: var(--text-main);
+  padding: 10px;
+}
+
+select.form-control option:hover,
+select.form-control option:focus,
+select.form-control option:checked {
+  background-color: var(--accent-red) !important;
+  color: #fff !important;
+}
+
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

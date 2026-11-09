@@ -33,6 +33,19 @@ $MvnCmd = Join-Path $MavenDir "bin\mvn.cmd"
 Start-Process -FilePath $MvnCmd -ArgumentList "spring-boot:run" -WorkingDirectory (Join-Path $BaseDir "backend") -RedirectStandardOutput (Join-Path $BaseDir "backend_out.log") -RedirectStandardError (Join-Path $BaseDir "backend_err.log") -NoNewWindow
 Write-Host "Backend API process spawned. Logs: backend_out.log / backend_err.log"
 
+# Wait for backend to be ready on port 8080
+Write-Host "Waiting for Backend to initialize on port 8080..."
+$attempts = 0
+while ($attempts -lt 20) {
+    Start-Sleep -Seconds 1
+    $conn = Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue
+    if ($conn) {
+        Write-Host "Backend online and listening on port 8080!"
+        break
+    }
+    $attempts++
+}
+
 # Start Vite React Frontend
 Write-Host "Starting React Frontend (Vite port 5173)..."
 cd frontend

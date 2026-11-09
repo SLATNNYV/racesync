@@ -56,7 +56,15 @@ function InspectionPortal({ token }) {
         const data = await response.json()
         setVehicles(data)
       } else {
-        setError('Não foi possível carregar os veículos para vistoria.')
+        const text = await response.text()
+        console.error('Erro HTTP', response.status, text)
+        if (response.status === 403) {
+          setError('Acesso negado. Apenas Gestores e Organizadores podem acessar esta área.')
+        } else if (response.status === 401) {
+          setError('Sessão expirada. Faça login novamente.')
+        } else {
+          setError(`Não foi possível carregar os veículos (HTTP ${response.status}).`)
+        }
       }
     } catch (err) {
       console.error('Erro ao buscar veículos no portal:', err)
@@ -73,8 +81,17 @@ function InspectionPortal({ token }) {
    */
   const startInspection = (vehicle) => {
     setEditingVehicle(vehicle)
-    setInspectionStatus(vehicle.inspectionStatus || 'APPROVED')
-    setInspectionNotes(vehicle.inspectionNotes || '')
+    const currentStatus = vehicle.inspectionStatus
+    const defaultStatus = (currentStatus === 'APPROVED' || currentStatus === 'REJECTED') ? currentStatus : 'APPROVED'
+    setInspectionStatus(defaultStatus)
+    
+    // Se a nota atual for a mensagem inicial padrão, pré-preenche com nota apropriada
+    if (!vehicle.inspectionNotes || vehicle.inspectionNotes === 'Aguardando vistoria técnica presencial.') {
+      setInspectionNotes(defaultStatus === 'APPROVED' ? 'Veículo inspecionado e aprovado para a pista.' : 'Veículo reprovado na vistoria técnica.')
+    } else {
+      setInspectionNotes(vehicle.inspectionNotes)
+    }
+    
     setMessage('')
     setError('')
     // Scroll para o formulário de vistoria no mobile
@@ -90,6 +107,11 @@ function InspectionPortal({ token }) {
     e.preventDefault()
     if (!editingVehicle) return
 
+    if (inspectionStatus !== 'APPROVED' && inspectionStatus !== 'REJECTED') {
+      setError('Por favor, selecione "Aprovar" ou "Reprovar" na Decisão de Segurança.')
+      return
+    }
+
     setSubmitting(true)
     setError('')
     setMessage('')
@@ -103,19 +125,27 @@ function InspectionPortal({ token }) {
         },
         body: JSON.stringify({
           status: inspectionStatus,
-          notes: inspectionNotes
+          notes: inspectionNotes || (inspectionStatus === 'APPROVED' ? 'Aprovado na vistoria de segurança.' : 'Reprovado na vistoria técnica.')
         })
       })
 
       if (!response.ok) {
-        throw new Error('Falha ao registrar vistoria.')
+        const errText = await response.text()
+        console.error('Inspect error', response.status, errText)
+        if (response.status === 403) {
+          throw new Error('Acesso negado: apenas Gestores e Organizadores podem realizar vistorias.')
+        } else if (response.status === 401) {
+          throw new Error('Sessão expirada. Faça login novamente.')
+        } else {
+          throw new Error(`Falha ao registrar vistoria (HTTP ${response.status}): ${errText || 'Erro no servidor'}`)
+        }
       }
 
       const updatedVehicle = await response.json()
       
       // Atualiza o estado da lista local com as novas informações da vistoria
       setVehicles(vehicles.map(v => v.id === updatedVehicle.id ? updatedVehicle : v))
-      setMessage(`Vistoria do veículo ${updatedVehicle.name} registrada!`)
+      setMessage(`Vistoria do veículo ${updatedVehicle.name} salva com sucesso!`)
       setEditingVehicle(null) // Fecha o formulário lateral
     } catch (err) {
       setError(err.message)
@@ -125,12 +155,15 @@ function InspectionPortal({ token }) {
   }
 
   // Filtra os carros com base na caixa de pesquisa
-  const filteredVehicles = vehicles.filter(v =>
-    v.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.owner.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredVehicles = vehicles.filter(v => {
+    const term = (searchTerm || '').toLowerCase()
+    const number = String(v.number || '').toLowerCase()
+    const category = String(v.category || '').toLowerCase()
+    const name = String(v.name || '').toLowerCase()
+    const ownerName = String(v.owner?.name || '').toLowerCase()
+    const ownerEmail = String(v.owner?.email || '').toLowerCase()
+    return number.includes(term) || category.includes(term) || name.includes(term) || ownerName.includes(term) || ownerEmail.includes(term)
+  })
 
   // Número de colunas do grid: 2 se estiver editando (desktop), 1 caso contrário
   const gridCols = editingVehicle ? '1.2fr 1fr' : '1fr'
@@ -206,8 +239,8 @@ function InspectionPortal({ token }) {
                   {filteredVehicles.map(vehicle => (
                     <tr key={vehicle.id} style={{ borderBottom: '1px solid var(--border-color)', height: '54px' }}>
                       <td style={{ padding: '8px 12px' }} data-label="Piloto">
-                        <div><strong>{vehicle.owner.name}</strong></div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{vehicle.owner.email}</div>
+                        <div><strong>{vehicle.owner?.name || 'Piloto'}</strong></div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{vehicle.owner?.email || ''}</div>
                       </td>
                       <td style={{ padding: '8px 12px' }} data-label="Veículo">{vehicle.name} ({vehicle.category})</td>
                       <td style={{ padding: '8px 12px', fontWeight: 600, fontFamily: 'var(--font-display)' }} data-label="Nº">#{vehicle.number}</td>
@@ -264,7 +297,7 @@ function InspectionPortal({ token }) {
               gap: '6px',
               fontSize: '0.85rem'
             }}>
-              <div><strong>Piloto:</strong> {editingVehicle.owner.name}</div>
+              <div><strong>Piloto:</strong> {editingVehicle.owner?.name || 'Piloto'}</div>
               <div><strong>Carro:</strong> {editingVehicle.name} ({editingVehicle.category})</div>
               <div><strong>Nº:</strong> #{editingVehicle.number}</div>
             </div>
@@ -281,7 +314,7 @@ function InspectionPortal({ token }) {
                       flexGrow: 1,
                       padding: '12px',
                       borderRadius: '8px',
-                      border: '1px solid',
+                      border: '2px solid',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -290,12 +323,18 @@ function InspectionPortal({ token }) {
                       fontWeight: 'bold',
                       fontSize: '0.9rem',
                       transition: 'all 0.2s',
-                      background: inspectionStatus === 'APPROVED' ? 'rgba(0,230,118,0.15)' : 'transparent',
+                      background: inspectionStatus === 'APPROVED' ? 'rgba(0,230,118,0.2)' : 'transparent',
                       borderColor: inspectionStatus === 'APPROVED' ? 'var(--status-approved)' : 'var(--border-color)',
                       color: inspectionStatus === 'APPROVED' ? 'var(--status-approved)' : 'var(--text-muted)',
+                      boxShadow: inspectionStatus === 'APPROVED' ? '0 0 15px rgba(0, 230, 118, 0.3)' : 'none',
                       minHeight: '48px'
                     }}
-                    onClick={() => setInspectionStatus('APPROVED')}
+                    onClick={() => {
+                      setInspectionStatus('APPROVED')
+                      if (!inspectionNotes || inspectionNotes.includes('reprovad') || inspectionNotes.includes('presencial')) {
+                        setInspectionNotes('Veículo inspecionado e aprovado para a pista.')
+                      }
+                    }}
                   >
                     <ShieldCheck size={18} />
                     Aprovar
@@ -308,7 +347,7 @@ function InspectionPortal({ token }) {
                       flexGrow: 1,
                       padding: '12px',
                       borderRadius: '8px',
-                      border: '1px solid',
+                      border: '2px solid',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -317,12 +356,18 @@ function InspectionPortal({ token }) {
                       fontWeight: 'bold',
                       fontSize: '0.9rem',
                       transition: 'all 0.2s',
-                      background: inspectionStatus === 'REJECTED' ? 'rgba(255,23,68,0.15)' : 'transparent',
+                      background: inspectionStatus === 'REJECTED' ? 'rgba(255,23,68,0.2)' : 'transparent',
                       borderColor: inspectionStatus === 'REJECTED' ? 'var(--status-rejected)' : 'var(--border-color)',
                       color: inspectionStatus === 'REJECTED' ? 'var(--status-rejected)' : 'var(--text-muted)',
+                      boxShadow: inspectionStatus === 'REJECTED' ? '0 0 15px rgba(255, 23, 68, 0.3)' : 'none',
                       minHeight: '48px'
                     }}
-                    onClick={() => setInspectionStatus('REJECTED')}
+                    onClick={() => {
+                      setInspectionStatus('REJECTED')
+                      if (!inspectionNotes || inspectionNotes.includes('aprovad') || inspectionNotes.includes('presencial')) {
+                        setInspectionNotes('Veículo reprovado na vistoria: requer adequação dos itens de segurança.')
+                      }
+                    }}
                   >
                     <ShieldAlert size={18} />
                     Reprovar
